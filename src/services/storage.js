@@ -1,54 +1,45 @@
-import imageCompression from 'browser-image-compression'
-
 // Configuraciones de compresión según el tipo de imagen
-// Así optimizamos el tamaño antes de subir a Cloudinary
 const configs = {
-  // Logo del negocio - cuadrado, liviano
-  logo: {
-    maxSizeMB: 0.3,
-    maxWidthOrHeight: 400,
-    useWebWorker: true,
-  },
-  // Banner del negocio - horizontal, un poco más pesado
-  banner: {
-    maxSizeMB: 0.5,
-    maxWidthOrHeight: 1200,
-    useWebWorker: true,
-  },
-  // Imagen de servicio - cuadrada, liviana
-  servicio: {
-    maxSizeMB: 0.3,
-    maxWidthOrHeight: 800,
-    useWebWorker: true,
-  },
+  logo:     { maxSizeMB: 0.3, maxWidthOrHeight: 400,  useWebWorker: true },
+  banner:   { maxSizeMB: 0.5, maxWidthOrHeight: 1200, useWebWorker: true },
+  servicio: { maxSizeMB: 0.3, maxWidthOrHeight: 800,  useWebWorker: true },
 }
 
 // Función principal para subir una imagen a Cloudinary.
-// Recibe el archivo, el tipo (logo/banner/servicio) y una carpeta opcional.
-// Retorna la URL pública de la imagen subida.
+// Intenta comprimir primero, si falla sube el archivo original.
 export const subirImagen = async (archivo, tipo = 'servicio', carpeta = 'general') => {
   try {
-    // 1. Comprimimos la imagen antes de subirla
-    const config = configs[tipo] || configs.servicio
-    const comprimida = await imageCompression(archivo, config)
+    let archivoFinal = archivo
 
-    // 2. Preparamos los datos para enviar a Cloudinary
+    // Intentamos comprimir solo si el archivo pesa más de 500KB
+    if (archivo.size > 500 * 1024) {
+      try {
+        const imageCompression = (await import('browser-image-compression')).default
+        const config = configs[tipo] || configs.servicio
+        archivoFinal = await imageCompression(archivo, config)
+      } catch (compressionError) {
+        // Si la compresión falla usamos el archivo original
+        console.warn('Compresión falló, usando archivo original:', compressionError)
+        archivoFinal = archivo
+      }
+    }
+
+    // Preparamos los datos para Cloudinary
     const formData = new FormData()
-    formData.append('file', comprimida)
+    formData.append('file', archivoFinal)
     formData.append('upload_preset', import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET)
-    // Organizamos las imágenes en carpetas dentro de Cloudinary
     formData.append('folder', `bookease/${carpeta}`)
 
-    // 3. Subimos la imagen a Cloudinary
+    // Subimos a Cloudinary
     const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME
     const res = await fetch(
       `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
       { method: 'POST', body: formData }
     )
 
-    const data = await res.json()
+    if (!res.ok) throw new Error('Error en la respuesta de Cloudinary')
 
-    // 4. Retornamos la URL segura de la imagen
+    const data = await res.json()
     return data.secure_url
 
   } catch (error) {
@@ -57,8 +48,7 @@ export const subirImagen = async (archivo, tipo = 'servicio', carpeta = 'general
   }
 }
 
-// Función auxiliar para previsualizar una imagen localmente
-// antes de subirla, sin gastar ancho de banda
+// Genera una URL local para previsualizar la imagen antes de subirla
 export const previsualizarImagen = (archivo) => {
   return URL.createObjectURL(archivo)
 }

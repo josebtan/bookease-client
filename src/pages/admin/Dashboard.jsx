@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { db } from '../../services/firebase'
 import { doc, getDoc } from 'firebase/firestore'
+import QRNegocio from '../../components/ui/QRNegocio'
 
 function Dashboard() {
   const { user, userData, logout } = useAuth()
@@ -102,10 +103,14 @@ function Dashboard() {
                     {negocio.descripcion}
                   </p>
                 </div>
-                {/* Badge del plan */}
-                <span className="bg-gray-100 text-gray-600 text-xs font-semibold px-3 py-1 rounded-full">
-                  Plan {negocio.plan}
-                </span>
+                <div className="flex items-center gap-3">
+  {/* Badge del plan */}
+  <span className="bg-gray-100 text-gray-600 text-xs font-semibold px-3 py-1 rounded-full">
+    Plan {negocio.plan}
+  </span>
+  {/* QR y link del negocio */}
+  <QRNegocio slug={negocio.slug} nombreNegocio={negocio.nombre} />
+</div>
               </div>
 
               {/* INFORMACIÓN DE CONTACTO */}
