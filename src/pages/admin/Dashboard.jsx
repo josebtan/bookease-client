@@ -329,23 +329,24 @@ function Dashboard() {
             </div>
 
             {/* ACCESOS RÁPIDOS */}
-            <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-              {[
-                { label: 'Servicios',    icon: '✂️', ruta: '/admin/servicios' },
-                { label: 'Empleados',    icon: '👥', ruta: '/admin/empleados' },
-                { label: 'Citas',        icon: '📅', ruta: '/admin/citas' },
-                { label: 'Estadísticas', icon: '📊', ruta: '/admin/estadisticas' },
-              ].map((item) => (
-                <button
-                  key={item.label}
-                  onClick={() => navigate(item.ruta)}
-                  className="bg-white border border-gray-200 rounded-2xl p-6 text-center hover:border-blue-300 hover:shadow-sm transition"
-                >
-                  <div className="text-3xl mb-2">{item.icon}</div>
-                  <p className="text-sm font-semibold text-gray-700">{item.label}</p>
-                </button>
-              ))}
-            </div>
+<div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+  {[
+    { label: 'Servicios',    icon: '✂️', ruta: '/admin/servicios' },
+    { label: 'Empleados',    icon: '👥', ruta: '/admin/empleados' },
+    { label: 'Clientes',     icon: '🧑‍🤝‍🧑', ruta: '/admin/clientes' },
+    { label: 'Citas',        icon: '📅', ruta: '/admin/citas' },
+    { label: 'Estadísticas', icon: '📊', ruta: '/admin/estadisticas' },
+  ].map((item) => (
+    <button
+      key={item.label}
+      onClick={() => navigate(item.ruta)}
+      className="bg-white border border-gray-200 rounded-2xl p-6 text-center hover:border-blue-300 hover:shadow-sm transition"
+    >
+      <div className="text-3xl mb-2">{item.icon}</div>
+      <p className="text-sm font-semibold text-gray-700">{item.label}</p>
+    </button>
+  ))}
+</div>
 
           </div>
         )}

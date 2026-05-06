@@ -14,6 +14,7 @@ import Dashboard from './pages/admin/Dashboard'
 import RegisterBusiness from './pages/admin/RegisterBusiness'
 import Servicios from './pages/admin/Servicios'
 import Empleados from './pages/admin/Empleados'
+import Clientes from './pages/admin/Clientes'
 
 // Componente que protege rutas privadas
 import ProtectedRoute from './components/layout/ProtectedRoute'
@@ -35,7 +36,7 @@ function App() {
         {/* PÁGINA PÚBLICA DEL NEGOCIO */}
         <Route path="/negocio/:slug" element={<NegocioPublico />} />
 
-        {/* REGISTRO DE CLIENTES - desde el link del negocio */}
+        {/* REGISTRO DE CLIENTES */}
         <Route path="/negocio/:slug/registro" element={<RegistroCliente />} />
 
         {/* RUTAS PRIVADAS DEL ADMINISTRADOR */}
@@ -68,6 +69,14 @@ function App() {
           element={
             <ProtectedRoute>
               <Empleados />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/clientes"
+          element={
+            <ProtectedRoute>
+              <Clientes />
             </ProtectedRoute>
           }
         />
