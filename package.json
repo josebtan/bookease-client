@@ -11,7 +11,7 @@
   },
   "dependencies": {
     "browser-image-compression": "^2.0.2",
-    "date-fns": "^4.1.0",
+    "date-fns": "^4.4.0",
     "firebase": "^12.12.1",
     "lucide-react": "^1.14.0",
     "qrcode.react": "^4.2.0",

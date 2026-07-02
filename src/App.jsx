@@ -8,6 +8,11 @@ import NegocioPublico from './pages/public/NegocioPublico'
 
 // Páginas del cliente
 import RegistroCliente from './pages/client/RegistroCliente'
+import Agendar from './pages/client/Agendar'
+import MisCitas from './pages/client/MisCitas'
+
+// Panel del trabajador
+import WorkerPanel from './pages/worker/WorkerPanel'
 
 // Páginas del administrador - requieren autenticación
 import Dashboard from './pages/admin/Dashboard'
@@ -15,6 +20,7 @@ import RegisterBusiness from './pages/admin/RegisterBusiness'
 import Servicios from './pages/admin/Servicios'
 import Empleados from './pages/admin/Empleados'
 import Clientes from './pages/admin/Clientes'
+import Citas from './pages/admin/Citas'
 
 // Componente que protege rutas privadas
 import ProtectedRoute from './components/layout/ProtectedRoute'
@@ -38,6 +44,10 @@ function App() {
 
         {/* REGISTRO DE CLIENTES */}
         <Route path="/negocio/:slug/registro" element={<RegistroCliente />} />
+
+        {/* AGENDAMIENTO Y CITAS DEL CLIENTE */}
+        <Route path="/negocio/:slug/agendar" element={<Agendar />} />
+        <Route path="/negocio/:slug/mis-citas" element={<MisCitas />} />
 
         {/* RUTAS PRIVADAS DEL ADMINISTRADOR */}
         <Route
@@ -77,6 +87,24 @@ function App() {
           element={
             <ProtectedRoute>
               <Clientes />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/citas"
+          element={
+            <ProtectedRoute>
+              <Citas />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* PANEL DEL TRABAJADOR */}
+        <Route
+          path="/worker/panel"
+          element={
+            <ProtectedRoute>
+              <WorkerPanel />
             </ProtectedRoute>
           }
         />

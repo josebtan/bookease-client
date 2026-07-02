@@ -335,6 +335,7 @@ function Dashboard() {
     { label: 'Empleados',    icon: '👥', ruta: '/admin/empleados' },
     { label: 'Clientes',     icon: '🧑‍🤝‍🧑', ruta: '/admin/clientes' },
     { label: 'Citas',        icon: '📅', ruta: '/admin/citas' },
+    { label: 'Citas',        icon: '📅', ruta: '/admin/citas' },
     { label: 'Estadísticas', icon: '📊', ruta: '/admin/estadisticas' },
   ].map((item) => (
     <button

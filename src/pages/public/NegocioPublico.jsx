@@ -217,7 +217,7 @@ function NegocioPublico() {
                       {/* Botón agendar - redirige al login si no está autenticado */}
                       <button
                         onClick={() => user
-                          ? navigate(`/negocio/${slug}/agendar/${servicio.id}`)
+                          ? navigate(`/negocio/${slug}/agendar`)
                           : navigate(`/negocio/${slug}/registro`)
                         }
                         className="bg-blue-800 text-white px-4 py-2 rounded-xl text-sm font-semibold hover:bg-blue-900 ml-4 flex-shrink-0"
