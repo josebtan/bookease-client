@@ -8,7 +8,7 @@ function Login() {
   const navigate = useNavigate()
 
   useEffect(() => {
-    if (user) navigate('/admin/dashboard')
+    if (user) navigate('/admin/negocios')
   }, [user])
 
   return (

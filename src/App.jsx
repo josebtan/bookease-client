@@ -21,6 +21,7 @@ import Servicios from './pages/admin/Servicios'
 import Empleados from './pages/admin/Empleados'
 import Clientes from './pages/admin/Clientes'
 import Citas from './pages/admin/Citas'
+import MisNegocios from './pages/admin/MisNegocios'
 
 // Componente que protege rutas privadas
 import ProtectedRoute from './components/layout/ProtectedRoute'
@@ -95,6 +96,16 @@ function App() {
           element={
             <ProtectedRoute>
               <Citas />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* PANEL DE NEGOCIOS */}
+        <Route
+          path="/admin/negocios"
+          element={
+            <ProtectedRoute>
+              <MisNegocios />
             </ProtectedRoute>
           }
         />

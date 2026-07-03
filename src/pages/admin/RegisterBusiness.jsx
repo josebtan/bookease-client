@@ -20,7 +20,7 @@ const CATEGORIAS = [
 const DIAS = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo']
 
 function RegisterBusiness() {
-  const { user } = useAuth()
+  const { user, userData } = useAuth()
   const navigate = useNavigate()
 
   // Paso actual del wizard (1, 2 o 3)
@@ -91,19 +91,16 @@ function RegisterBusiness() {
         ...form,
         slug,
         negocioId,
+        ownerUid: user.uid,
         ownerId: user.uid,
-        plan: 'gratis',
+        plan: userData?.plan || 'gratis',
+        estado: 'activo',
         activo: true,
         createdAt: serverTimestamp(),
       })
 
-      // Actualizamos el usuario con el negocioId asignado
-      await setDoc(doc(db, 'users', user.uid), {
-        negocioId,
-      }, { merge: true })
-
-      // Redirigimos al dashboard
-      navigate('/admin/dashboard')
+      // Redirigimos al panel de negocios
+      navigate('/admin/negocios')
     } catch (error) {
       console.error('Error al registrar negocio:', error)
     }

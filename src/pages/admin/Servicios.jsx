@@ -15,7 +15,7 @@ import { subirImagen } from '../../services/storage'
 import ImageUploader from '../../components/ui/ImageUploader'
 
 function Servicios() {
-  const { userData } = useAuth()
+  const { userData, negocioId } = useAuth()
   const navigate = useNavigate()
 
   // Lista de servicios del negocio
@@ -46,8 +46,8 @@ function Servicios() {
   // Carga los servicios desde Firestore al entrar
   useEffect(() => {
     const cargarServicios = async () => {
-      if (!userData?.negocioId) return
-      const ref = collection(db, 'negocios', userData.negocioId, 'servicios')
+      if (!negocioId) return
+      const ref = collection(db, 'negocios', negocioId, 'servicios')
       const snap = await getDocs(ref)
       const lista = snap.docs.map(d => ({ id: d.id, ...d.data() }))
       setServicios(lista)
@@ -102,7 +102,7 @@ function Servicios() {
         imagenUrl = await subirImagen(
           imagenArchivo,
           'servicio',
-          userData.negocioId
+          negocioId
         )
       }
 
@@ -117,7 +117,7 @@ function Servicios() {
 
       if (editando) {
         // EDITAR - actualizamos el documento existente
-        const ref = doc(db, 'negocios', userData.negocioId, 'servicios', editando.id)
+        const ref = doc(db, 'negocios', negocioId, 'servicios', editando.id)
         await updateDoc(ref, datos)
 
         // Actualizamos la lista local
@@ -126,7 +126,7 @@ function Servicios() {
         ))
       } else {
         // CREAR - agregamos un nuevo documento
-        const ref = collection(db, 'negocios', userData.negocioId, 'servicios')
+        const ref = collection(db, 'negocios', negocioId, 'servicios')
         const docRef = await addDoc(ref, {
           ...datos,
           createdAt: serverTimestamp(),
@@ -146,7 +146,7 @@ function Servicios() {
   // Elimina un servicio
   const handleEliminar = async (id) => {
     if (!confirm('¿Estás seguro de eliminar este servicio?')) return
-    await deleteDoc(doc(db, 'negocios', userData.negocioId, 'servicios', id))
+    await deleteDoc(doc(db, 'negocios', negocioId, 'servicios', id))
     setServicios(servicios.filter(s => s.id !== id))
   }
 

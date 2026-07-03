@@ -7,7 +7,7 @@ import { subirImagen } from '../../services/storage'
 import QRNegocio from '../../components/ui/QRNegocio'
 
 function Dashboard() {
-  const { user, userData, logout } = useAuth()
+  const { user, userData, negocioId, negocioActivo, limpiarNegocio, logout } = useAuth()
   const navigate = useNavigate()
 
   // Datos del negocio
@@ -30,8 +30,8 @@ function Dashboard() {
 
   useEffect(() => {
     const cargarNegocio = async () => {
-      if (userData?.negocioId) {
-        const ref = doc(db, 'negocios', userData.negocioId)
+      if (negocioId) {
+        const ref = doc(db, 'negocios', negocioId)
         const snap = await getDoc(ref)
         if (snap.exists()) {
           setNegocio(snap.data())
@@ -74,18 +74,18 @@ function Dashboard() {
 
       // Subimos el logo si hay uno nuevo
       if (logoArchivo) {
-        const logoUrl = await subirImagen(logoArchivo, 'logo', userData.negocioId)
+        const logoUrl = await subirImagen(logoArchivo, 'logo', negocioId)
         actualizaciones.logoUrl = logoUrl
       }
 
       // Subimos el banner si hay uno nuevo
       if (bannerArchivo) {
-        const bannerUrl = await subirImagen(bannerArchivo, 'banner', userData.negocioId)
+        const bannerUrl = await subirImagen(bannerArchivo, 'banner', negocioId)
         actualizaciones.bannerUrl = bannerUrl
       }
 
       // Actualizamos Firestore
-      await updateDoc(doc(db, 'negocios', userData.negocioId), actualizaciones)
+      await updateDoc(doc(db, 'negocios', negocioId), actualizaciones)
 
       // Actualizamos el estado local
       setNegocio({ ...negocio, ...actualizaciones })

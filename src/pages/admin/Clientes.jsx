@@ -15,7 +15,7 @@ import {
 } from 'firebase/firestore'
 
 function Clientes() {
-  const { userData } = useAuth()
+  const { userData, negocioId } = useAuth()
   const navigate = useNavigate()
 
   // Lista de clientes del negocio
@@ -40,14 +40,14 @@ function Clientes() {
   // Carga los clientes asociados al negocio del admin
   useEffect(() => {
     const cargarClientes = async () => {
-      if (!userData?.negocioId) return
+      if (!negocioId) return
 
       try {
         // Buscamos todas las asociaciones de este negocio en negocio_clientes
         const asociacionesRef = collection(db, 'negocio_clientes')
         const q = query(
           asociacionesRef,
-          where('negocioId', '==', userData.negocioId)
+          where('negocioId', '==', negocioId)
         )
         const asociacionesSnap = await getDocs(q)
 
@@ -96,13 +96,13 @@ function Clientes() {
       // 1. Cambiamos el rol del usuario a 'worker' en users/
       await updateDoc(doc(db, 'users', clienteSeleccionado.id), {
         rol: 'worker',
-        adminId: userData.negocioId,
-        negocioId: userData.negocioId,
+        adminId: negocioId,
+        negocioId: negocioId,
       })
 
       // 2. Creamos su perfil de empleado en la subcolección empleados/
       await setDoc(
-        doc(db, 'negocios', userData.negocioId, 'empleados', clienteSeleccionado.id),
+        doc(db, 'negocios', negocioId, 'empleados', clienteSeleccionado.id),
         {
           nombre: clienteSeleccionado.nombre,
           email: clienteSeleccionado.email,

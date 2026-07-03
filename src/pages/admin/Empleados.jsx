@@ -15,7 +15,7 @@ import { subirImagen } from '../../services/storage'
 import ImageUploader from '../../components/ui/ImageUploader'
 
 function Empleados() {
-  const { userData } = useAuth()
+  const { userData, negocioId } = useAuth()
   const navigate = useNavigate()
 
   // Lista de empleados del negocio
@@ -50,15 +50,15 @@ function Empleados() {
   // Carga empleados y servicios desde Firestore al entrar
   useEffect(() => {
     const cargarDatos = async () => {
-      if (!userData?.negocioId) return
+      if (!negocioId) return
 
       // Cargamos empleados
-      const empRef = collection(db, 'negocios', userData.negocioId, 'empleados')
+      const empRef = collection(db, 'negocios', negocioId, 'empleados')
       const empSnap = await getDocs(empRef)
       setEmpleados(empSnap.docs.map(d => ({ id: d.id, ...d.data() })))
 
       // Cargamos servicios para el selector de asignación
-      const svcRef = collection(db, 'negocios', userData.negocioId, 'servicios')
+      const svcRef = collection(db, 'negocios', negocioId, 'servicios')
       const svcSnap = await getDocs(svcRef)
       setServicios(svcSnap.docs.map(d => ({ id: d.id, ...d.data() })))
 
@@ -125,7 +125,7 @@ function Empleados() {
         fotoUrl = await subirImagen(
           fotoArchivo,
           'logo',
-          `${userData.negocioId}/empleados`
+          `${negocioId}/empleados`
         )
       }
 
@@ -141,14 +141,14 @@ function Empleados() {
 
       if (editando) {
         // EDITAR - actualizamos el documento existente
-        const ref = doc(db, 'negocios', userData.negocioId, 'empleados', editando.id)
+        const ref = doc(db, 'negocios', negocioId, 'empleados', editando.id)
         await updateDoc(ref, datos)
         setEmpleados(empleados.map(e =>
           e.id === editando.id ? { ...e, ...datos } : e
         ))
       } else {
         // CREAR - agregamos nuevo documento
-        const ref = collection(db, 'negocios', userData.negocioId, 'empleados')
+        const ref = collection(db, 'negocios', negocioId, 'empleados')
         const docRef = await addDoc(ref, {
           ...datos,
           calificacion: 0,
@@ -168,7 +168,7 @@ function Empleados() {
   // Elimina un empleado
   const handleEliminar = async (id) => {
     if (!confirm('¿Estás seguro de eliminar este empleado?')) return
-    await deleteDoc(doc(db, 'negocios', userData.negocioId, 'empleados', id))
+    await deleteDoc(doc(db, 'negocios', negocioId, 'empleados', id))
     setEmpleados(empleados.filter(e => e.id !== id))
   }
 
