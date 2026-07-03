@@ -3,7 +3,6 @@ import {
   collection,
   addDoc,
   getDocs,
-  getDoc,
   doc,
   query,
   where,
@@ -11,40 +10,25 @@ import {
   serverTimestamp,
   orderBy,
 } from 'firebase/firestore'
-import { format, parseISO, addMinutes, isWithinInterval, parse } from 'date-fns'
+import { format, addMinutes } from 'date-fns'
 
 // ─────────────────────────────────────────
 // CREAR CITA
 // ─────────────────────────────────────────
 export const crearCita = async ({
-  negocioId,
-  clienteId,
-  empleadoId,
-  servicioId,
-  fecha,       // "YYYY-MM-DD"
-  horaInicio,  // "HH:mm"
-  duracion,    // minutos
-  monto,
-  notasCliente,
+  negocioId, clienteId, empleadoId, servicioId,
+  fecha, horaInicio, duracion, monto, notasCliente,
 }) => {
-  const [h, m] = horaInicio.split(':').map(Number)
   const inicio = new Date(`${fecha}T${horaInicio}:00`)
   const fin = addMinutes(inicio, duracion)
   const horaFin = format(fin, 'HH:mm')
 
   const ref = collection(db, 'negocios', negocioId, 'citas')
   const docRef = await addDoc(ref, {
-    negocioId,
-    clienteId,
-    empleadoId,
-    servicioId,
-    fecha,
-    horaInicio,
-    horaFin,
-    duracion,
-    monto,
+    negocioId, clienteId, empleadoId, servicioId,
+    fecha, horaInicio, horaFin, duracion, monto,
     notasCliente: notasCliente || '',
-    estado: 'pendiente', // pendiente | confirmada | cancelada | completada
+    estado: 'pendiente',
     createdAt: serverTimestamp(),
   })
   return docRef.id
@@ -52,23 +36,24 @@ export const crearCita = async ({
 
 // ─────────────────────────────────────────
 // OBTENER CITAS DEL NEGOCIO
+// Sin orderBy compuesto para evitar índices
 // ─────────────────────────────────────────
 export const getCitasNegocio = async (negocioId, filtros = {}) => {
   const ref = collection(db, 'negocios', negocioId, 'citas')
-  let q = query(ref, orderBy('fecha', 'desc'))
+  let q
 
   if (filtros.fecha) {
-    q = query(ref, where('fecha', '==', filtros.fecha), orderBy('horaInicio'))
-  }
-  if (filtros.empleadoId) {
-    q = query(ref,
-      where('empleadoId', '==', filtros.empleadoId),
-      orderBy('fecha', 'desc')
-    )
+    q = query(ref, where('fecha', '==', filtros.fecha))
+  } else if (filtros.empleadoId) {
+    q = query(ref, where('empleadoId', '==', filtros.empleadoId))
+  } else {
+    q = query(ref)
   }
 
   const snap = await getDocs(q)
-  return snap.docs.map(d => ({ id: d.id, ...d.data() }))
+  const citas = snap.docs.map(d => ({ id: d.id, ...d.data() }))
+  // Ordenar en cliente para evitar índices compuestos
+  return citas.sort((a, b) => b.fecha.localeCompare(a.fecha))
 }
 
 // ─────────────────────────────────────────
@@ -76,13 +61,10 @@ export const getCitasNegocio = async (negocioId, filtros = {}) => {
 // ─────────────────────────────────────────
 export const getCitasCliente = async (negocioId, clienteId) => {
   const ref = collection(db, 'negocios', negocioId, 'citas')
-  const q = query(
-    ref,
-    where('clienteId', '==', clienteId),
-    orderBy('fecha', 'desc')
-  )
+  const q = query(ref, where('clienteId', '==', clienteId))
   const snap = await getDocs(q)
-  return snap.docs.map(d => ({ id: d.id, ...d.data() }))
+  const citas = snap.docs.map(d => ({ id: d.id, ...d.data() }))
+  return citas.sort((a, b) => b.fecha.localeCompare(a.fecha))
 }
 
 // ─────────────────────────────────────────
@@ -94,10 +76,11 @@ export const getCitasEmpleadoFecha = async (negocioId, empleadoId, fecha) => {
     ref,
     where('empleadoId', '==', empleadoId),
     where('fecha', '==', fecha),
-    where('estado', 'in', ['pendiente', 'confirmada'])
   )
   const snap = await getDocs(q)
-  return snap.docs.map(d => ({ id: d.id, ...d.data() }))
+  return snap.docs
+    .map(d => ({ id: d.id, ...d.data() }))
+    .filter(c => ['pendiente', 'confirmada'].includes(c.estado))
 }
 
 // ─────────────────────────────────────────
@@ -111,47 +94,49 @@ export const actualizarEstadoCita = async (negocioId, citaId, estado) => {
 // ─────────────────────────────────────────
 // CALCULAR HORAS DISPONIBLES
 // ─────────────────────────────────────────
+const HORARIO_DEFAULT = {
+  Lunes:     { activo: true,  inicio: '08:00', fin: '18:00' },
+  Martes:    { activo: true,  inicio: '08:00', fin: '18:00' },
+  Miércoles: { activo: true,  inicio: '08:00', fin: '18:00' },
+  Jueves:    { activo: true,  inicio: '08:00', fin: '18:00' },
+  Viernes:   { activo: true,  inicio: '08:00', fin: '18:00' },
+  Sábado:    { activo: true,  inicio: '08:00', fin: '14:00' },
+  Domingo:   { activo: false, inicio: '08:00', fin: '18:00' },
+}
+
 export const getHorasDisponibles = async ({
-  negocioId,
-  empleadoId,
-  fecha,       // "YYYY-MM-DD"
-  duracion,    // minutos
-  horarioNegocio, // objeto con dias { Lunes: { activo, inicio, fin }, ... }
+  negocioId, empleadoId, fecha, duracion, horarioNegocio,
 }) => {
-  // Mapear fecha a día de la semana en español
   const diasMap = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado']
   const diaSemana = diasMap[new Date(fecha + 'T12:00:00').getDay()]
 
-  const horariaDia = horarioNegocio?.[diaSemana]
-  if (!horariaDia?.activo) return [] // negocio cerrado ese día
+  // Usar horario del negocio o fallback al default
+  const horario = horarioNegocio || HORARIO_DEFAULT
+  const horariaDia = horario[diaSemana]
 
-  // Citas ya existentes del empleado en esa fecha
+  // Si no hay horario para ese día o está inactivo, retornar vacío
+  if (!horariaDia || !horariaDia.activo) return []
+
+  const duracionNum = Number(duracion) || 30
+
   const citasExistentes = await getCitasEmpleadoFecha(negocioId, empleadoId, fecha)
 
-  // Generar slots cada 30 min dentro del horario del negocio
   const slots = []
-  const [hInicio, mInicio] = horariaDia.inicio.split(':').map(Number)
-  const [hFin, mFin] = horariaDia.fin.split(':').map(Number)
-
   let cursor = new Date(`${fecha}T${horariaDia.inicio}:00`)
   const limite = new Date(`${fecha}T${horariaDia.fin}:00`)
-  limite.setMinutes(limite.getMinutes() - duracion) // el servicio debe terminar antes del cierre
+  limite.setMinutes(limite.getMinutes() - duracionNum)
 
   while (cursor <= limite) {
     const horaStr = format(cursor, 'HH:mm')
-    const finSlot = addMinutes(cursor, duracion)
+    const finSlot = addMinutes(cursor, duracionNum)
 
-    // Verificar si este slot choca con alguna cita existente
     const hayConflicto = citasExistentes.some(cita => {
       const citaInicio = new Date(`${fecha}T${cita.horaInicio}:00`)
       const citaFin = new Date(`${fecha}T${cita.horaFin}:00`)
       return cursor < citaFin && finSlot > citaInicio
     })
 
-    if (!hayConflicto) {
-      slots.push(horaStr)
-    }
-
+    if (!hayConflicto) slots.push(horaStr)
     cursor = addMinutes(cursor, 30)
   }
 

@@ -22,6 +22,7 @@ function Agendar() {
   const [loading, setLoading] = useState(true)
   const [cargandoHoras, setCargandoHoras] = useState(false)
   const [guardando, setGuardando] = useState(false)
+  const [errorHoras, setErrorHoras] = useState(null)
 
   const [seleccion, setSeleccion] = useState({
     servicio: null,
@@ -68,15 +69,22 @@ function Agendar() {
     if (!seleccion.empleado || !seleccion.fecha || !negocio) return
     const cargar = async () => {
       setCargandoHoras(true)
-      const horas = await getHorasDisponibles({
-        negocioId: negocio.id,
-        empleadoId: seleccion.empleado.id,
-        fecha: seleccion.fecha,
-        duracion: seleccion.servicio.duracion,
-        horarioNegocio: negocio.horario,
-      })
-      setHorasDisponibles(horas)
-      setSeleccion(s => ({ ...s, hora: null }))
+      setErrorHoras(null)
+      try {
+        const horas = await getHorasDisponibles({
+          negocioId: negocio.id,
+          empleadoId: seleccion.empleado.id,
+          fecha: seleccion.fecha,
+          duracion: seleccion.servicio?.duracion || 30,
+          horarioNegocio: negocio.horario || null,
+        })
+        setHorasDisponibles(horas)
+        setSeleccion(s => ({ ...s, hora: null }))
+      } catch (e) {
+        console.error('Error cargando horas:', e)
+        setErrorHoras('No se pudo cargar la disponibilidad. Intenta de nuevo.')
+        setHorasDisponibles([])
+      }
       setCargandoHoras(false)
     }
     cargar()
@@ -231,6 +239,10 @@ function Agendar() {
               <p className="text-sm font-semibold text-gray-600 mb-2">Horas disponibles</p>
               {cargandoHoras ? (
                 <p className="text-gray-400 text-sm py-6 text-center">Verificando disponibilidad...</p>
+              ) : errorHoras ? (
+                <div className="bg-red-50 border border-red-200 rounded-xl p-4 text-center">
+                  <p className="text-sm text-red-700 font-medium">{errorHoras}</p>
+                </div>
               ) : horasDisponibles.length === 0 ? (
                 <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-center">
                   <p className="text-sm text-amber-700 font-medium">No hay horas disponibles este día</p>
